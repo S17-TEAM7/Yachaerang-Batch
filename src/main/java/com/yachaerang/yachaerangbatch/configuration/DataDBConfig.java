@@ -47,7 +47,7 @@ public class DataDBConfig {
                 new PathMatchingResourcePatternResolver()
                         .getResources("classpath:mappers/*.xml")
         );
-        sqlSessionFactory.setTypeAliasesPackage("com.yachaerang.yachaerangbatch.entity");
+        sqlSessionFactory.setTypeAliasesPackage("com.yachaerang.yachaerangbatch.domain.entity");
 
         // Set MyBatis
         org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
