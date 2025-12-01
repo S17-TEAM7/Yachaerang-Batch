@@ -40,3 +40,4 @@ out/
 .env
 gradle
 .gradle/
+application-test.yaml
