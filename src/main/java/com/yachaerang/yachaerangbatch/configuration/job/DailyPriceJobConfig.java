@@ -12,10 +12,8 @@ import com.yachaerang.yachaerangbatch.repository.ProductRepository;
 import com.yachaerang.yachaerangbatch.service.KamisApiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -28,6 +26,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /*
 Daily Price Job에 대한 설정
@@ -47,6 +46,7 @@ public class DailyPriceJobConfig {
     private final DailyPriceRepository dailyPriceRepository;
 
     private static final int CHUNK_SIZE = 100;
+    private static final List<String> CATEGORY_CODES = List.of("100", "200", "300", "400", "500", "600");
 
     /**
      * Job: 카테고리 100, 200, 300, 400, 500, 600 순차 실행(categoryCode)
@@ -56,35 +56,18 @@ public class DailyPriceJobConfig {
         return new JobBuilder("dailyPriceJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(jobCompletionListener)
-                .start(categoryStep("100"))
-                .next(categoryStep("200"))
-                .next(categoryStep("300"))
-                .next(categoryStep("400"))
-                .next(categoryStep("500"))
-                .next(categoryStep("600"))
+                .start(dailyPriceStep())
                 .build();
     }
 
     /**
      * 카테고리별 Step 생성(Job의 Step)
      */
-    private Step categoryStep(String categoryCode) {
-        return new StepBuilder("dailyPriceStep-" + categoryCode, jobRepository)
-                .listener(new org.springframework.batch.core.StepExecutionListener() {
-                    @Override
-                    public void beforeStep(StepExecution stepExecution) {
-                        stepExecution.getExecutionContext().put("categoryCode", categoryCode);
-                        log.info("StepExecutionContext에 categoryCode 저장: {}", categoryCode);
-                    }
-
-                    @Override
-                    public ExitStatus afterStep(StepExecution stepExecution) {
-                        return ExitStatus.COMPLETED;
-                    }
-                })
+    private Step dailyPriceStep() {
+        return new StepBuilder("dailyPriceStep", jobRepository)
                 .listener(stepExecutionListener)
                 .<KamisPriceItem, DailyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
-                .reader(dailyPriceItemReader(null, null))
+                .reader(dailyPriceReader(null))
                 .processor(dailyPriceProcessor(null))
                 .writer(dailyPriceWriter())
                 .faultTolerant()
@@ -96,23 +79,18 @@ public class DailyPriceJobConfig {
     /**
      * Reader 스텝
      * @param targetDateStr : jobParameters에서 얻어오기
-     * @param categoryCode : StepExecutionContext에 주입된 값 가져오기
      * @return
      */
     @Bean
     @StepScope
-    public DailyPriceReader dailyPriceItemReader(
-            @Value("#{jobParameters['targetDate']}") String targetDateStr,
-            @Value("#{stepExecutionContext['categoryCode']}") String categoryCode) {
+    public DailyPriceReader dailyPriceReader(
+            @Value("#{jobParameters['targetDate']}") String targetDateStr) {
 
         LocalDate targetDate = parseTargetDate(targetDateStr);
-        String category = (categoryCode != null && !categoryCode.isBlank())
-                ? categoryCode
-                : "200";
 
-        log.info("Reader 생성: targetDate={}, categoryCode={}", targetDate, category);
+        log.info("Reader 생성: targetDate={}", targetDate);
 
-        return new DailyPriceReader(kamisApiService, targetDate, category);
+        return new DailyPriceReader(kamisApiService, targetDate, CATEGORY_CODES);
     }
 
     /**
