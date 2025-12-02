@@ -33,30 +33,12 @@ public class DailyPriceScheduler {
             log.info("Daily Price Job 시작: date={}", targetDate);
             JobParameters jobParameters = new JobParametersBuilder()
                     .addString("targetDate", targetDate.format(DATE_FORMATTER))
-                    .addLong("timestamp", System.currentTimeMillis()) // log
+                    .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
             jobLauncher.run(dailyPriceJob, jobParameters);
             log.info("Daily Price Job 전체 완료: date={}", targetDate);
         } catch (Exception e) {
             log.error("Daily Price Job 실패: date={}, error={}", targetDate, e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 수동 실행용 메서드
-     */
-    public void runManually(LocalDate targetDate, String categoryCode) {
-        try {
-            log.info("Daily Price Job 수동 시작: date={}", targetDate);
-            JobParameters jobParameters = new JobParametersBuilder()
-                    .addString("targetDate", targetDate.format(DATE_FORMATTER))
-                    .addLong("timestamp", System.currentTimeMillis())
-                    .toJobParameters();
-            jobLauncher.run(dailyPriceJob, jobParameters);
-            log.info("Daily Price Job 수동 실행 전체 완료: date={}", targetDate);
-        } catch (Exception e) {
-            log.error("수동 실행 실패", e);
-            throw new RuntimeException("Job 실행 실패", e);
         }
     }
 }
