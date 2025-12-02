@@ -61,13 +61,11 @@ public class KamisApiService {
                 throw new GeneralException("KAMIS API HTML 에러 응답: " + truncate(body));
             }
 
-            // 2) 바디가 비어 있으면 그대로 빈 리스트 반환
             if (body == null || body.isBlank()) {
                 log.warn("KAMIS API 응답 body가 비어있습니다: date={}", date);
                 return Collections.emptyList();
             }
 
-            // 3) JSON 파싱
             KamisApiResponse apiResponse;
             try {
                 apiResponse = objectMapper.readValue(body, KamisApiResponse.class);
@@ -81,7 +79,6 @@ public class KamisApiService {
                 return Collections.emptyList();
             }
 
-            // 에러 코드 체크 (필드 이름은 실제 DTO에 맞게 수정)
             if (!"000".equals(apiResponse.getData().getErrorCode())) {
                 log.warn("KAMIS API 에러 코드: {}, message={}",
                         apiResponse.getData().getErrorCode());
