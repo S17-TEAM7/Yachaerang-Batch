@@ -13,7 +13,7 @@ public class Product {
 
     private Long productId;
 
-    private String productName;
+    private String name;
     private String productCode;
 
     private String itemName;
@@ -23,6 +23,8 @@ public class Product {
     private String kindCode;
 
     private String productRank;
+    private String rankCode;
+
     private String unit;
     private String origin;
     private String imageUrl;

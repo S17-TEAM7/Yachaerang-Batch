@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yachaerang.yachaerangbatch.repository.DailyPriceRepository">
+    <resultMap id="dailyPriceResultMap"
+               type="com.yachaerang.yachaerangbatch.domain.entity.DailyPrice">
+        <id property="dailyPriceId" column="daily_price_id"/>
+        <result property="productCode" column="product_code"/>
+        <result property="priceDate" column="price_date"/>
+        <result property="price" column="price"/>
+    </resultMap>
+
+    <!-- save -->
+    <insert id="save" parameterType="com.yachaerang.yachaerangbatch.domain.entity.DailyPrice">
+        INSERT INTO daily_price (
+            product_code, price_date, price
+        ) VALUES (#{productCode}, #{priceDate}, #{price})
+    </insert>
+
+    <!-- List Save -->
+    <insert id="saveAll" parameterType="list">
+        INSERT INTO daily_price
+        (product_code, price_date, price)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.productCode}, #{item.priceDate}, #{item.price})
+        </foreach>
+    </insert>
+
+    <!-- 배치 저장 -->
+    <insert id="insertBatchFromDailyProduct" parameterType="map">
+        INSERT INTO daily_price
+        (product_code, price_date, price)
+        VALUES
+        <foreach collection="priceList" item="item" separator=",">
+            (#{productId}, #{item.priceDate}, #{item.price})
+        </foreach>
+    </insert>
+
+    <!-- 특정상품과 날짜 존재 여부를 확인 -->
+    <select id="countByProductCodeAndPriceDate" parameterType="map"
+            resultType="int">
+        select count(*)
+        from daily_price
+        where product_code = #{productCode}
+        and price_date = #{priceDate}
+    </select>
+
+    <!-- itemName, kindName 기반 productCode 조회 -->
+    <select id="selectProductCodeByItemNameAndKind" resultType="String">
+        SELECT product_code
+        FROM product
+        WHERE item_name = #{itemName}
+          AND kind_name = #{kindName}
+    </select>
+
+    <!-- 날자 범위 내에 존재하는 날짜 조회 -->
+    <select id="findExistingDatesByProductAndDateRange" resultType="java.time.LocalDate">
+        SELECT price_date
+        FROM daily_price
+        WHERE product_code = #{productCode}
+          AND price_date BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- product + priceDate 존재 여불르 체크 (Boolean) -->
+    <select id="existsByProductAndPriceDate"
+            parameterType="map" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM daily_price
+            WHERE product_code = #{product.productCode}
+              AND price_date = #{priceDate}
+        )
+    </select>
+</mapper>
