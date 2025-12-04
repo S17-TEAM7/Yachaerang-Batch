@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yachaerang.yachaerangbatch.repository.ProductRepository">
+
+    <resultMap id="productResultMap"
+               type="com.yachaerang.yachaerangbatch.domain.entity.Product">
+        <id property="productId" column="product_id"/>
+        <result property="name" column="name" javaType="String"/>
+        <result property="productCode" column="product_code" javaType="String"/>
+        <result property="itemName" column="item_name" javaType="String"/>
+        <result property="itemCode" column="item_code" javaType="String"/>
+        <result property="kindName" column="kind_name" javaType="String"/>
+        <result property="kindCode" column="kind_code" javaType="String"/>
+        <result property="productRank" column="product_rank" javaType="String"/>
+        <result property="rankCode" column="rank_code" javaType="String"/>
+        <result property="unit" column="unit" javaType="String"/>
+        <result property="origin" column="origin" javaType="String"/>
+        <result property="imageUrl" column="image_url" javaType="String"/>
+    </resultMap>
+
+    <!-- save (imageUrl 제외) -->
+    <insert id="save"
+            parameterType="com.yachaerang.yachaerangbatch.domain.entity.Product"
+            useGeneratedKeys="true"
+            keyProperty="productId">
+        INSERT INTO product
+        (name, product_code, item_name, item_code, kind_name, kind_code, product_rank, rank_code, unit, origin)
+        VALUES
+            (#{name}, #{productCode}, #{itemName}, #{itemCode}, #{kindName}, #{kindCode}, #{productRank}, #{rankCode}, #{unit}, #{origin})
+    </insert>
+
+    <!-- findByItemCodeAndKindCodeAndRank -->
+    <select id="findByItemCodeAndKindCodeAndRank" resultMap="productResultMap">
+        select *
+        from product
+        where item_code = #{itemCode}
+          and kind_code = #{kindCode}
+          and rank_code = #{rankCode}
+    </select>
+    <!-- findByProductCode -->
+    <select id="findByProductCode" parameterType="String" resultMap="productResultMap">
+        select *
+        from product
+        where product_code = #{productCode}
+    </select>
+
+    <!-- findAllActiveProducts 조회 -->
+    <select id="findAllActiveProducts" resultMap="productResultMap">
+        select *
+        from product
+        where item_code is not null
+    </select>
+
+    <!-- itemCode만 조회 -->
+    <select id="findDistinctItemCodes" resultType="String">
+        SELECT DISTINCT item_code
+        FROM product
+        WHERE item_code IS NOT NULL
+    </select>
+
+    <!-- itemName만 조회 -->
+    <select id="findDistinctItemNames" resultType="String">
+        SELECT DISTINCT item_name
+        FROM product
+        WHERE item_code IS NOT NULL
+    </select>
+</mapper>

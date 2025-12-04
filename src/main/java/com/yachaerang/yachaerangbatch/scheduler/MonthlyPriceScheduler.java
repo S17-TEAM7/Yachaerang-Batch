@@ -1,0 +1,44 @@
+package com.yachaerang.yachaerangbatch.scheduler;
+
+import com.yachaerang.yachaerangbatch.service.BatchJobService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionException;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class MonthlyPriceScheduler {
+
+    private final BatchJobService batchJobService;
+
+    /**
+     * 매월 1일 새벽 2시에 전월 데이터 수집
+     */
+    @Scheduled(cron = "0 0 2 1 * *")
+    public void collectPreviousMonthData() {
+        log.info("========================================");
+        log.info("월간 배치 스케줄러 시작: {}", LocalDateTime.now());
+        log.info("========================================");
+
+        try {
+            String[] categories = {"100", "200", "300", "400", "500", "600"};
+            for (String category : categories) {
+                try {
+                    JobExecution execution = batchJobService.collectPreviousMonth();
+                    log.info("카테고리 {} 수집 완료: {}", category, execution.getStatus());
+                } catch (JobExecutionException e) {
+                    log.error("카테고리 {} 수집 실패: {}", category, e.getMessage());
+                }
+            }
+            log.info("월간 배치 스케줄러 완료");
+        } catch (Exception e) {
+            log.error("월간 배치 스케줄러 실패", e);
+        }
+    }
+}

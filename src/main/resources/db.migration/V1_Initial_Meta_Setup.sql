@@ -1,7 +1,5 @@
 -- V1: 기본 메타 테이블 생성
 
-CREATE DATABASE IF NOT EXISTS meta_yachaerang;
-USE meta_yachaerang;
 -- 1. batch_job_instance
 CREATE TABLE IF NOT EXISTS BATCH_JOB_INSTANCE  (
                                                    JOB_INSTANCE_ID BIGINT  PRIMARY KEY ,
