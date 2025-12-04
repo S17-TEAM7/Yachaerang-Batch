@@ -77,7 +77,7 @@ public class DailyPriceProcessor implements ItemProcessor<KamisPriceItem, DailyP
                 item.getItemName(), item.getKindName(), item.getRank());
 
         Product newProduct = Product.builder()
-                .name(item.getKindName())
+                .name(item.getKindName() + " - " + item.getRank())
                 .productCode(PREFIX + item.getItemCode() + "-" + item.getKindCode() + "-" + item.getRankCode())
                 .itemName(item.getItemName())
                 .itemCode(item.getItemCode())
