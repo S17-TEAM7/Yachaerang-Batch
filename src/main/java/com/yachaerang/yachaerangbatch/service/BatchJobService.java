@@ -10,6 +10,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 @Slf4j
@@ -85,7 +86,7 @@ public class BatchJobService {
      * 특정 기간의 주간 가격 집계 실행
      */
     public void runWeeklyAggregation(LocalDate targetDate) {
-        LocalDate startDate = targetDate.with(DayOfWeek.MONDAY);
+        LocalDate startDate = targetDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate endDate = startDate.plusDays(6);
         // 날짜 검증
         LocalDate yesterday = LocalDate.now().minusDays(1);
