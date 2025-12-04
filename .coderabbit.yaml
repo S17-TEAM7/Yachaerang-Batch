@@ -2,21 +2,22 @@
 language: "ko-KR"
 early_access: false
 reviews:
-  profile: "balanced"
+  profile: "chill"
   request_changes_workflow: true
   high_level_summary: true
   poem: false
   review_status: true
   collapse_walkthrough: false
+  path_filters:
+    - "!**/*.md"
+    - "!docs/**"
+    - "!build/**"
+    - "!generated/**"
   auto_review:
     enabled: true
     drafts: false
-  exclude:
-    - "**/*.md"
-    - "docs/**"
-    - "build/**"
-    - "generated/**"
-  domain_knowledge:
-    backend: true
+    base_branches:
+      - "main"
+      - "develop"
 chat:
   auto_reply: true
