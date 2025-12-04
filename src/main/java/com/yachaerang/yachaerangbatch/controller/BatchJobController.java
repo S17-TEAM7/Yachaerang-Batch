@@ -18,7 +18,6 @@ import java.util.Map;
 public class BatchJobController {
 
     private final BatchJobService batchJobService;
-    private final DailyPriceScheduler dailyPriceScheduler;
 
     /**
      * 수동으로 일별 가격 수집 Job 실행
@@ -102,5 +101,16 @@ public class BatchJobController {
             response.put("error", e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
+    }
+
+    /*
+    특정 일자의 주간에 대한 집계 데이터 구하기
+     */
+    @PostMapping("/weekly-price")
+    public ResponseEntity<String> runWeeklyPriceJob(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate) {
+
+        batchJobService.runWeeklyAggregation(targetDate);
+        return ResponseEntity.ok("Job 실행 시작");
     }
 }

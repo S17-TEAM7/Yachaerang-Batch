@@ -6,6 +6,7 @@ import org.springframework.batch.core.*;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -18,6 +19,7 @@ public class BatchJobService {
     private final JobLauncher jobLauncher;
     private final Job dateRangePriceJob;
     private final Job dailyPriceJob;
+    private final Job weeklyPriceJob;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -77,5 +79,36 @@ public class BatchJobService {
         YearMonth previousMonth = YearMonth.now().minusMonths(1);
         log.info("이전의 달 배치 실행: {}-{}", previousMonth.getYear(), previousMonth.getMonthValue());
         return collectMonth(previousMonth.getYear(), previousMonth.getMonthValue());
+    }
+
+    /**
+     * 특정 기간의 주간 가격 집계 실행
+     */
+    public void runWeeklyAggregation(LocalDate targetDate) {
+        LocalDate startDate = targetDate.with(DayOfWeek.MONDAY);
+        LocalDate endDate = startDate.plusDays(6);
+        // 날짜 검증
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        if (!endDate.isBefore(yesterday)) {
+            throw new IllegalArgumentException(
+                    String.format("아직 완료되지 않은 주입니다.")
+            );
+        }
+
+        log.info("주간 집계 실행 - 입력: {}, 기간: {} ~ {}", targetDate, startDate, endDate);
+        try {
+            JobParameters params = new JobParametersBuilder()
+                    .addString("startDate", startDate.toString())
+                    .addString("endDate", endDate.toString())
+                    .addLong("timestamp", System.currentTimeMillis())
+                    .toJobParameters();
+
+            JobExecution execution = jobLauncher.run(weeklyPriceJob, params);
+            log.info("Job 실행 결과: {}", execution.getStatus());
+
+        } catch (Exception e) {
+            log.error("주간 가격 집계 Job 실행 실패", e);
+            throw new RuntimeException("Job 실행 실패", e);
+        }
     }
 }
