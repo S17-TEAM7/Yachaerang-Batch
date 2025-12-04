@@ -8,17 +8,16 @@ reviews:
   poem: false
   review_status: true
   collapse_walkthrough: false
+  path_filters:
+    - "!**/*.md"
+    - "!docs/**"
+    - "!build/**"
+    - "!generated/**"
   auto_review:
     enabled: true
     drafts: false
-    branches:
-      - develop
-  exclude:
-    - "**/*.md"
-    - "docs/**"
-    - "build/**"
-    - "generated/**"
-  domain_knowledge:
-    backend: true
+    base_branches:
+      - "main"
+      - "develop"
 chat:
   auto_reply: true
