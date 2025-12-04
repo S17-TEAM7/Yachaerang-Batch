@@ -2,3 +2,35 @@ spring:
   config:
     activate:
       on-profile: "dev"
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+      schema: classpath:org/springframework/batch/core/schema-@@platform@@.sql
+
+  flyway:
+    enabled: false
+
+  datasource-meta:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: ${DEV_META_DB_URL}
+    username: ${DEV_DB_USER}
+    password: ${DEV_DB_PASSWORD}
+
+
+  datasource-data:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: ${DEV_DB_URL}
+    username: ${DEV_DB_USER}
+    password: ${DEV_DB_PASSWORD}
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:/mapper/*.xml
+
+external:
+  kamis:
+    api-key: ${KAMIS_API_KEY}
+    id: ${KAMIS_API_ID}
