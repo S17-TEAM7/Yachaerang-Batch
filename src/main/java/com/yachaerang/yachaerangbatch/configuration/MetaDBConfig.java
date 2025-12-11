@@ -20,7 +20,9 @@ public class MetaDBConfig {
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource-meta")
     public DataSource metaDBSource() {
-        return DataSourceBuilder.create().build();
+        return DataSourceBuilder.create()
+                .type(com.zaxxer.hikari.HikariDataSource.class)
+                .build();
     }
 
     @Primary
