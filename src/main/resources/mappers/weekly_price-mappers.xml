@@ -46,7 +46,8 @@
             SELECT 1
             FROM weekly_price wp
             WHERE wp.product_code = agg.product_code
-              AND wp.start_date = agg.start_date
+              AND wp.price_year = agg.price_year
+              AND wp.week_number = agg.week_number
         )
         ORDER BY agg.product_code, agg.price_year, agg.week_number
     </select>
