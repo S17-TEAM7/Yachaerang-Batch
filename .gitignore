@@ -38,6 +38,5 @@ out/
 
 .DS_Store
 .env
-gradle
 .gradle/
 application-test.yaml

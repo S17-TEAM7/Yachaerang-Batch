@@ -32,8 +32,8 @@
                      dp.product_code AS product_code,
                      YEAR(dp.price_date) AS price_year,
                      WEEK(dp.price_date, 1) AS week_number,
-                     MIN(dp.price_date) AS start_date,
-                     MAX(dp.price_date) AS end_date,
+                     #{startDate} AS start_date,
+                     #{endDate} AS end_date,
                      ROUND(AVG(dp.price), 2) AS avg_price,
                      MAX(dp.price) AS max_price,
                      MIN(dp.price) AS min_price,
@@ -46,7 +46,8 @@
             SELECT 1
             FROM weekly_price wp
             WHERE wp.product_code = agg.product_code
-              AND wp.start_date = agg.start_date
+              AND wp.price_year = agg.price_year
+              AND wp.week_number = agg.week_number
         )
         ORDER BY agg.product_code, agg.price_year, agg.week_number
     </select>

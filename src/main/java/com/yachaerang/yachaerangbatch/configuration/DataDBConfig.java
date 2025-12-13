@@ -31,7 +31,9 @@ public class DataDBConfig {
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource-data")
     public DataSource dataSource() {
-        return DataSourceBuilder.create().build();
+        return DataSourceBuilder.create()
+                .type(com.zaxxer.hikari.HikariDataSource.class)
+                .build();
     }
 
     /*
