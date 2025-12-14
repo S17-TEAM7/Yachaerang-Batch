@@ -3,7 +3,7 @@ package com.yachaerang.yachaerangbatch.configuration.job;
 import com.yachaerang.yachaerangbatch.domain.entity.WeeklyPrice;
 import com.yachaerang.yachaerangbatch.listener.JobCompletionListener;
 import com.yachaerang.yachaerangbatch.listener.StepExecutionListener;
-import com.yachaerang.yachaerangbatch.service.PriceAggregationService;
+import com.yachaerang.yachaerangbatch.service.WeeklyPriceAggregationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
@@ -34,7 +34,7 @@ public class WeeklyPriceJobConfig {
     private final JobCompletionListener jobCompletionListener;
     private final StepExecutionListener stepExecutionListener;
 
-    private final PriceAggregationService priceAggregationService;
+    private final WeeklyPriceAggregationService weeklyPriceAggregationService;
 
     private static final int CHUNK_SIZE= 100;
 
@@ -77,7 +77,7 @@ public class WeeklyPriceJobConfig {
             @Value("#{jobParameters['endDate']}") String endDate) {
 
         List<WeeklyPrice> weeklyPriceList =
-                priceAggregationService.getWeeklyAggregatedPrices(
+                weeklyPriceAggregationService.getWeeklyAggregatedPrices(
                         LocalDate.parse(startDate), LocalDate.parse(endDate)
                 );
 
@@ -112,7 +112,7 @@ public class WeeklyPriceJobConfig {
         return chunk -> {
             List<WeeklyPrice> items = new ArrayList<>(chunk.getItems());
             log.info("저장할 데이터 : {} 건", items.size());
-            priceAggregationService.saveWeeklyPrices(items);
+            weeklyPriceAggregationService.saveWeeklyPrices(items);
         };
     }
 }
