@@ -131,7 +131,7 @@ public class BatchJobService {
         YearMonth currentMonth = YearMonth.now();
         if (!targetMonth.isBefore(currentMonth)) {
             throw new GeneralException(
-                    String.format("아직 완료되지 않은 달입니다. 대상: {}년 {}월", year, month)
+                    String.format("아직 완료되지 않은 달입니다. 대상: %d년 %d월", year, month)
             );
         }
 
