@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class PriceAggregationService {
+public class WeeklyPriceAggregationService {
 
     private final WeeklyPriceRepository weeklyPriceRepository;
 

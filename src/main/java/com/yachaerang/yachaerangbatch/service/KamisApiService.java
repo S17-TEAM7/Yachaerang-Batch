@@ -1,5 +1,6 @@
 package com.yachaerang.yachaerangbatch.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yachaerang.yachaerangbatch.domain.dto.KamisApiResponse;
 import com.yachaerang.yachaerangbatch.domain.dto.KamisPriceItem;
@@ -68,7 +69,20 @@ public class KamisApiService {
 
             KamisApiResponse apiResponse;
             try {
+                JsonNode root = objectMapper.readTree(body);
+                JsonNode data = root.get("data");
+
+                // 001 (데이터 비어있는) 경우
+                if (data != null && data.isArray() && data.size() == 1 && data.get(0).isTextual()
+                && "001".equals(data.get(0).asText())) {
+                    log.warn("KAMIS API data=001 응답 (데이터 없음): date={}, body={}",
+                            date, truncate(body));
+                    return Collections.emptyList();
+                }
+
+                // 파싱이 되는 경우
                 apiResponse = objectMapper.readValue(body, KamisApiResponse.class);
+
             } catch (Exception e) {
                 log.error("KAMIS JSON 파싱 실패: body={}", truncate(body), e);
                 throw new GeneralException("KAMIS JSON 파싱 실패", e);
