@@ -38,7 +38,7 @@ Daily Price Job에 대한 설정
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class DailyPriceJobConfig implements Tasklet {
+public class DailyPriceJobConfig {
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager platformTransactionManager;
@@ -130,10 +130,5 @@ public class DailyPriceJobConfig implements Tasklet {
             return LocalDate.now().minusDays(1);
         }
         return LocalDate.parse(targetDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-    }
-
-    @Override
-    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-        return null;
     }
 }
