@@ -1,5 +1,6 @@
 package com.yachaerang.yachaerangbatch.configuration.job;
 
+import com.yachaerang.yachaerangbatch.configuration.parameter.MonthlyJobParameter;
 import com.yachaerang.yachaerangbatch.domain.entity.MonthlyPrice;
 import com.yachaerang.yachaerangbatch.listener.JobCompletionListener;
 import com.yachaerang.yachaerangbatch.listener.StepExecutionListener;
@@ -16,7 +17,6 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -72,21 +72,17 @@ public class MonthlyPriceJobConfig {
 
     /**
      * Reader 스텝
-     * @param year : 대상 년도
-     * @param month : 대상 월
+     * @param monthlyJobParameter: 연도와 월
      * @return
      */
     @Bean
     @StepScope
-    public ListItemReader<MonthlyPrice> monthlyPriceReader(
-            @Value("#{jobParameters['year']}") String year,
-            @Value("#{jobParameters['month']}") String month
-    ) {
-        int y = Integer.parseInt(year);
-        int m = Integer.parseInt(month);
+    public ListItemReader<MonthlyPrice> monthlyPriceReader(MonthlyJobParameter monthlyJobParameter) {
+        int year = monthlyJobParameter.getYear();
+        int month = monthlyJobParameter.getMonth();
 
         List<MonthlyPrice> monthlyPriceList =
-                monthlyPriceAggregationService.getMonthlyAggregatedPrices(y, m);
+                monthlyPriceAggregationService.getMonthlyAggregatedPrices(year, month);
 
         log.info("ListItemReader 초기화 - 최종 리스트 크기: {}", monthlyPriceList.size());
         return new ListItemReader<>(monthlyPriceList);

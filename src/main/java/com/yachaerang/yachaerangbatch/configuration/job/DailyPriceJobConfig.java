@@ -1,5 +1,6 @@
 package com.yachaerang.yachaerangbatch.configuration.job;
 
+import com.yachaerang.yachaerangbatch.configuration.parameter.DailyJobParameter;
 import com.yachaerang.yachaerangbatch.domain.dailyPrice.processor.DailyPriceProcessor;
 import com.yachaerang.yachaerangbatch.domain.dailyPrice.reader.DailyPriceReader;
 import com.yachaerang.yachaerangbatch.domain.dailyPrice.writer.DailyPriceWriter;
@@ -14,12 +15,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -34,7 +38,7 @@ Daily Price Job에 대한 설정
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class DailyPriceJobConfig {
+public class DailyPriceJobConfig implements Tasklet {
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager platformTransactionManager;
@@ -78,15 +82,14 @@ public class DailyPriceJobConfig {
 
     /**
      * Reader 스텝
-     * @param targetDateStr : jobParameters에서 얻어오기
+     * @param dailyJobParameter : jobParameters에서 얻어오기
      * @return
      */
     @Bean
     @StepScope
-    public DailyPriceReader dailyPriceReader(
-            @Value("#{jobParameters['targetDate']}") String targetDateStr) {
+    public DailyPriceReader dailyPriceReader(DailyJobParameter dailyJobParameter) {
 
-        LocalDate targetDate = parseTargetDate(targetDateStr);
+        LocalDate targetDate = dailyJobParameter.getTargetDate();
 
         log.info("Reader 생성: targetDate={}", targetDate);
 
@@ -95,15 +98,14 @@ public class DailyPriceJobConfig {
 
     /**
      * Processor Step
-     * @param targetDateStr : jobParameter로부터 얻음 (category는 reader에서 필터링)
+     * @param dailyJobParameter : jobParameter로부터 얻음 (category는 reader에서 필터링)
      * @return
      */
     @Bean
     @StepScope
-    public DailyPriceProcessor dailyPriceProcessor(
-            @Value("#{jobParameters['targetDate']}") String targetDateStr) {
+    public DailyPriceProcessor dailyPriceProcessor(DailyJobParameter dailyJobParameter) {
 
-        LocalDate targetDate = parseTargetDate(targetDateStr);
+        LocalDate targetDate = dailyJobParameter.getTargetDate();
 
         return new DailyPriceProcessor(
                 productRepository,
@@ -128,5 +130,10 @@ public class DailyPriceJobConfig {
             return LocalDate.now().minusDays(1);
         }
         return LocalDate.parse(targetDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
+
+    @Override
+    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        return null;
     }
 }

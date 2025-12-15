@@ -1,5 +1,6 @@
 package com.yachaerang.yachaerangbatch.configuration.job;
 
+import com.yachaerang.yachaerangbatch.configuration.parameter.MonthlyJobParameter;
 import com.yachaerang.yachaerangbatch.domain.entity.YearlyPrice;
 import com.yachaerang.yachaerangbatch.listener.JobCompletionListener;
 import com.yachaerang.yachaerangbatch.listener.StepExecutionListener;
@@ -93,10 +94,8 @@ public class YearlyPriceJobConfig {
      */
     @Bean
     @StepScope
-    public ItemProcessor<YearlyPrice, YearlyPrice> yearlyPriceProcessor(
-            @Value("#{jobParameters['year']}") String year
-    ) {
-        int y = Integer.parseInt(year);
+    public ItemProcessor<YearlyPrice, YearlyPrice> yearlyPriceProcessor(MonthlyJobParameter monthlyJobParameter) {
+        int year = monthlyJobParameter.getYear();
 
         return item -> {
             if (item.getPriceCount() == 0) {
@@ -105,8 +104,8 @@ public class YearlyPriceJobConfig {
             }
 
             // 연초와 연말 가격 설정
-            item.setStartPrice(yearlyPriceAggregationService.getStartPrice(item.getProductCode(), y));
-            item.setEndPrice(yearlyPriceAggregationService.getEndPrice(item.getProductCode(), y));
+            item.setStartPrice(yearlyPriceAggregationService.getStartPrice(item.getProductCode(), year));
+            item.setEndPrice(yearlyPriceAggregationService.getEndPrice(item.getProductCode(), year));
             return item;
         };
     }
