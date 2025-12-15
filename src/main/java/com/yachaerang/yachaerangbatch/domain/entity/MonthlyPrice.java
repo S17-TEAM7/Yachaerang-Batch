@@ -18,11 +18,11 @@ public class MonthlyPrice extends BaseEntity {
     private String productCode;
 
     private Integer priceYear;
+    private Integer priceMonth;
 
     private Double avgPrice;
     private Long minPrice;
     private Long maxPrice;
 
-    private Long startPrice;
-    private Long endPrice;
+    private Integer priceCount;
 }

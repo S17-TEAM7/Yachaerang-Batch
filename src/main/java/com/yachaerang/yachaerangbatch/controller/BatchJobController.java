@@ -4,6 +4,7 @@ import com.yachaerang.yachaerangbatch.scheduler.DailyPriceScheduler;
 import com.yachaerang.yachaerangbatch.service.BatchJobService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -112,5 +113,29 @@ public class BatchJobController {
 
         batchJobService.runWeeklyAggregation(targetDate);
         return ResponseEntity.ok("Job 실행 시작");
+    }
+
+    /*
+    특정 월의 월간 집계 데이터 구하기
+     */
+    @PostMapping("/monthly-price")
+    public ResponseEntity<String> runMonthlyPriceJob(
+            @RequestParam Integer year, @RequestParam Integer month
+    ) throws JobExecutionException {
+        batchJobService.runMonthlyAggregation(year, month);
+        return ResponseEntity.ok("Job 실행 시작");
+    }
+
+    /*
+    특정 년도의 연간 데이터 구하기
+     */
+    @PostMapping("/yearly-price")
+    public ResponseEntity<String> runYearlyPriceJob(
+            @RequestParam Integer year
+    ) {
+        batchJobService.runYearlyAggregation(year);
+        return ResponseEntity.ok(
+                String.format("연간 가격 집계 완료 - %d년", year)
+        );
     }
 }
