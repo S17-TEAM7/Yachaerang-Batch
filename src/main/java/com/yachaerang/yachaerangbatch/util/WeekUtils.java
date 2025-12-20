@@ -14,7 +14,7 @@ public class WeekUtils {
      * 특정 날짜가 속한 ISO 주차의 시작일(월요일) 반환
      */
     public static LocalDate getWeekStartDate(int year, int week) {
-        return LocalDate.of(year, 1, 1)
+        return LocalDate.of(year, 1, 4)
                 .with(IsoFields.WEEK_OF_WEEK_BASED_YEAR, week)
                 .with(DayOfWeek.MONDAY);
     }
