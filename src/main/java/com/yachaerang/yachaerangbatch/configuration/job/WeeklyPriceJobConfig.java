@@ -77,7 +77,7 @@ public class WeeklyPriceJobConfig {
     public ListItemReader<WeeklyPrice> weeklyPriceReader(JobPeriodParameter jobPeriodParameter) {
 
         int year = jobPeriodParameter.getYear();
-        int week = jobPeriodParameter.getMonth();
+        int week = jobPeriodParameter.getWeek();
         LocalDate startDate = WeekUtils.getWeekStartDate(year, week);
         LocalDate endDate = WeekUtils.getWeekEndDate(year, week);
 

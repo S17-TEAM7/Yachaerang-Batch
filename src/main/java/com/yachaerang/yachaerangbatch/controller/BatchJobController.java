@@ -147,7 +147,7 @@ public class BatchJobController {
             response.put("jobId", execution.getJobId());
             response.put("status", execution.getStatus().toString());
             response.put("year", year.toString());
-            response.put("week", month.toString());
+            response.put("month", month.toString());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {

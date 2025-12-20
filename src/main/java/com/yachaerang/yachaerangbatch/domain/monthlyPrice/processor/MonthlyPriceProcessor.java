@@ -21,7 +21,7 @@ public class MonthlyPriceProcessor implements ItemProcessor<MonthlyPrice, Monthl
     public MonthlyPrice process(MonthlyPrice item) throws Exception {
 
         // null 일 경우 조회
-        if (item == null) {
+        if (item.getPriceCount() == 0) {
             log.debug("priceCount가 0이므로 스킵: {}", item.getProductCode());
             return null;
         }
