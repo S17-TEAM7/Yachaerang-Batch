@@ -119,10 +119,10 @@ public class YearlyPriceJobConfig {
                         .divide(BigDecimal.valueOf(startPrice), 4, RoundingMode.HALF_UP)  // startPrice로 나누기
                         .multiply(BigDecimal.valueOf(100));
 
-                log.info("연간 변화 계산: productCode={}, start={}, end={}, change={}, rate={}%",
+                log.debug("연간 변화 계산: productCode={}, start={}, end={}, change={}, rate={}%",
                         item.getProductCode(), startPrice, endPrice, priceChange, priceChangeRate);
             } else {
-                log.info("연간 변화 계산 불가: productCode={}, startPrice={}, endPrice={}",
+                log.debug("연간 변화 계산 불가: productCode={}, startPrice={}, endPrice={}",
                         item.getProductCode(), startPrice, endPrice);
             }
 

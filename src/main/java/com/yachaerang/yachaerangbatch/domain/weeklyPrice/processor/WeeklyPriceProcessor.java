@@ -43,9 +43,9 @@ public class WeeklyPriceProcessor implements ItemProcessor<WeeklyPrice, WeeklyPr
             priceChangeRate = BigDecimal.valueOf(priceChange)
                     .divide(BigDecimal.valueOf(startPrice), 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
-            log.info("주간 변화량: {} , 변화율: {}", priceChange, priceChangeRate);
+            log.debug("주간 변화량: {} , 변화율: {}", priceChange, priceChangeRate);
         } else {
-            log.info("주간 변화 계산 불가 (데이터 부족): productCode={}, startPrice={}, endPrice={}",
+            log.debug("주간 변화 계산 불가 (데이터 부족): productCode={}, startPrice={}, endPrice={}",
                     productCode, startPrice, endPrice);
         }
         return WeeklyPrice.builder()
