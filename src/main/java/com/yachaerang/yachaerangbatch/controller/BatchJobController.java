@@ -1,6 +1,5 @@
 package com.yachaerang.yachaerangbatch.controller;
 
-import com.yachaerang.yachaerangbatch.scheduler.DailyPriceScheduler;
 import com.yachaerang.yachaerangbatch.service.BatchJobService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.JobExecution;
@@ -104,38 +103,79 @@ public class BatchJobController {
         }
     }
 
-    /*
-    특정 일자의 주간에 대한 집계 데이터 구하기
+    /**
+     * 특정년도의 특정 week에 대한 조사
+     * @param year : 대상 년도
+     * @param week : 대상 주차(N주차)
+     * @return
      */
     @PostMapping("/weekly-price")
-    public ResponseEntity<String> runWeeklyPriceJob(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate) {
+    public ResponseEntity<Map<String, Object>> runWeeklyPriceJob(
+            @RequestParam("year") Integer year,
+            @RequestParam("week") Integer week
+    ) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            JobExecution execution = batchJobService.runWeeklyAggregation(year, week);
+            response.put("success", true);
+            response.put("jobId", execution.getJobId());
+            response.put("status", execution.getStatus().toString());
+            response.put("year", year.toString());
+            response.put("week", week.toString());
 
-        batchJobService.runWeeklyAggregation(targetDate);
-        return ResponseEntity.ok("Job 실행 시작");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 
     /*
     특정 월의 월간 집계 데이터 구하기
      */
     @PostMapping("/monthly-price")
-    public ResponseEntity<String> runMonthlyPriceJob(
-            @RequestParam Integer year, @RequestParam Integer month
+    public ResponseEntity<Map<String, Object>> runMonthlyPriceJob(
+            @RequestParam("year") Integer year,
+            @RequestParam("month") Integer month
     ) throws JobExecutionException {
-        batchJobService.runMonthlyAggregation(year, month);
-        return ResponseEntity.ok("Job 실행 시작");
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            JobExecution execution = batchJobService.runMonthlyAggregation(year, month);
+            response.put("success", true);
+            response.put("jobId", execution.getJobId());
+            response.put("status", execution.getStatus().toString());
+            response.put("year", year.toString());
+            response.put("week", month.toString());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 
     /*
     특정 년도의 연간 데이터 구하기
      */
     @PostMapping("/yearly-price")
-    public ResponseEntity<String> runYearlyPriceJob(
-            @RequestParam Integer year
-    ) {
-        batchJobService.runYearlyAggregation(year);
-        return ResponseEntity.ok(
-                String.format("연간 가격 집계 완료 - %d년", year)
-        );
+    public ResponseEntity<Map<String, Object>> runYearlyPriceJob(@RequestParam Integer year) {
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            JobExecution execution = batchJobService.runYearlyAggregation(year);
+            response.put("success", true);
+            response.put("jobId", execution.getJobId());
+            response.put("status", execution.getStatus().toString());
+            response.put("year", year.toString());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 }
