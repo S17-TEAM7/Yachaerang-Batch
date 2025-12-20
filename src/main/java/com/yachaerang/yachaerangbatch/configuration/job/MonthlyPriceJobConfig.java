@@ -1,9 +1,11 @@
 package com.yachaerang.yachaerangbatch.configuration.job;
 
-import com.yachaerang.yachaerangbatch.configuration.parameter.MonthlyJobParameter;
+import com.yachaerang.yachaerangbatch.configuration.parameter.JobPeriodParameter;
 import com.yachaerang.yachaerangbatch.domain.entity.MonthlyPrice;
+import com.yachaerang.yachaerangbatch.domain.monthlyPrice.processor.MonthlyPriceProcessor;
 import com.yachaerang.yachaerangbatch.listener.JobCompletionListener;
 import com.yachaerang.yachaerangbatch.listener.StepExecutionListener;
+import com.yachaerang.yachaerangbatch.repository.DailyPriceRepository;
 import com.yachaerang.yachaerangbatch.service.MonthlyPriceAggregationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ public class MonthlyPriceJobConfig {
     private final StepExecutionListener stepExecutionListener;
 
     private final MonthlyPriceAggregationService monthlyPriceAggregationService;
+    private final DailyPriceRepository dailyPriceRepository;
 
 
     private static final int CHUNK_SIZE= 100;
@@ -62,7 +65,7 @@ public class MonthlyPriceJobConfig {
                 .<MonthlyPrice, MonthlyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
                 .listener(stepExecutionListener)
                 .reader(monthlyPriceReader)
-                .processor(monthlyPriceProcessor)
+                .processor(monthlyPriceProcessor())
                 .writer(monthlyPriceWriter)
                 .faultTolerant()
                 .retryLimit(3)
@@ -72,14 +75,14 @@ public class MonthlyPriceJobConfig {
 
     /**
      * Reader 스텝
-     * @param monthlyJobParameter: 연도와 월
+     * @param jobPeriodParameter: 연도와 월
      * @return
      */
     @Bean
     @StepScope
-    public ListItemReader<MonthlyPrice> monthlyPriceReader(MonthlyJobParameter monthlyJobParameter) {
-        int year = monthlyJobParameter.getYear();
-        int month = monthlyJobParameter.getMonth();
+    public ListItemReader<MonthlyPrice> monthlyPriceReader(JobPeriodParameter jobPeriodParameter) {
+        int year = jobPeriodParameter.getYear();
+        int month = jobPeriodParameter.getMonth();
 
         List<MonthlyPrice> monthlyPriceList =
                 monthlyPriceAggregationService.getMonthlyAggregatedPrices(year, month);
@@ -93,14 +96,9 @@ public class MonthlyPriceJobConfig {
      * @return
      */
     @Bean
-    public ItemProcessor<MonthlyPrice, MonthlyPrice> monthlyPriceProcessor() {
-        return item -> {
-            if (item.getPriceCount() == 0) {
-                log.debug("priceCount가 0이므로 스킵: {}", item.getProductCode());
-                return null;
-            }
-            return item;
-        };
+    @StepScope
+    public MonthlyPriceProcessor monthlyPriceProcessor() {
+        return new MonthlyPriceProcessor(dailyPriceRepository);
     }
 
     /**
