@@ -13,6 +13,8 @@
         <result property="startPrice" column="start_price"/>
         <result property="endPrice" column="end_price"/>
         <result property="priceCount" column="price_count"/>
+        <result property="priceChange" column="price_change"/>
+        <result property="priceChangeRate" column="price_change_rate"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -57,11 +59,13 @@
         INSERT INTO yearly_price (
             product_code, price_year,
             avg_price, min_price, max_price,
-            start_price, end_price, price_count
+            start_price, end_price, price_count,
+                                  price_change, price_change_rate
         ) VALUES (
                      #{productCode}, #{priceYear},
                      #{avgPrice}, #{minPrice}, #{maxPrice},
-                     #{startPrice}, #{endPrice}, #{priceCount}
+                     #{startPrice}, #{endPrice}, #{priceCount},
+                  #{priceChange}, #{priceChangeRate}
                  )
             ON DUPLICATE KEY UPDATE
                                  avg_price = VALUES(avg_price),
@@ -70,6 +74,8 @@
                                  start_price = VALUES(start_price),
                                  end_price = VALUES(end_price),
                                  price_count = VALUES(price_count),
+                                price_change = VALUES(price_change),
+                                price_change_rate = VALUES(price_change_rate),
                                  updated_at = CURRENT_TIMESTAMP
     </insert>
 </mapper>
