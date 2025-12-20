@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -24,4 +26,7 @@ public class YearlyPrice extends BaseEntity {
     private Long endPrice;
 
     private Integer priceCount;
+
+    private Long priceChange;
+    private BigDecimal priceChangeRate;
 }

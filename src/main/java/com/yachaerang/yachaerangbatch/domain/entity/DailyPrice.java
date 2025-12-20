@@ -1,14 +1,13 @@
 package com.yachaerang.yachaerangbatch.domain.entity;
 
 import com.yachaerang.yachaerangbatch.domain.common.BaseEntity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -19,4 +18,7 @@ public class DailyPrice extends BaseEntity {
 
     private LocalDate priceDate;
     private long price;
+
+    private Long priceChange;
+    private BigDecimal priceChangeRate;
 }
