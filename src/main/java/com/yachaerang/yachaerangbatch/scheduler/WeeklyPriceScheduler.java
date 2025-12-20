@@ -35,7 +35,7 @@ public class WeeklyPriceScheduler {
             // 아니라면 상관 없음
             targetYear = todayYearWeek[0];
             // 저번주
-            targetWeek = WeekUtils.getLastIsoWeekOfYear(targetYear) - 1;
+            targetWeek = todayYearWeek[1] - 1;
         }
 
         // 저번주에 대하여 조회 시작
