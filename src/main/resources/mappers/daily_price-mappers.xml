@@ -12,59 +12,28 @@
         <result property="priceChangeRate" column="price_change_rate"/>
     </resultMap>
 
-    <!-- save -->
-    <insert id="save" parameterType="com.yachaerang.yachaerangbatch.domain.entity.DailyPrice">
-        INSERT INTO daily_price (
-            product_code, price_date, price
-        ) VALUES (#{productCode}, #{priceDate}, #{price})
-    </insert>
+    <!-- 특정 상품의 가장 최근 가격 조회(특정 날짜 이전) -->
+    <select id="findLatestPriceByProductCode"
+            resultType="java.lang.Long">
+        SELECT price
+        FROM daily_price
+        WHERE product_code = #{productCode}
+          AND price_date &lt; #{priceDate}
+        ORDER BY price_date DESC
+            LIMIT 1
+    </select>
 
     <!-- List Save -->
     <insert id="saveAll" parameterType="list">
         INSERT INTO daily_price
-        (product_code, price_date, price)
+        (product_code, price_date, price, price_change, price_change_rate)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.productCode}, #{item.priceDate}, #{item.price})
+            (#{item.productCode}, #{item.priceDate}, #{item.price}, #{item.priceChange}, #{item.priceChangeRate})
         </foreach>
     </insert>
 
-    <!-- 배치 저장 -->
-    <insert id="insertBatchFromDailyProduct" parameterType="map">
-        INSERT INTO daily_price
-        (product_code, price_date, price)
-        VALUES
-        <foreach collection="priceList" item="item" separator=",">
-            (#{productId}, #{item.priceDate}, #{item.price})
-        </foreach>
-    </insert>
-
-    <!-- 특정상품과 날짜 존재 여부를 확인 -->
-    <select id="countByProductCodeAndPriceDate" parameterType="map"
-            resultType="int">
-        select count(*)
-        from daily_price
-        where product_code = #{productCode}
-        and price_date = #{priceDate}
-    </select>
-
-    <!-- itemName, kindName 기반 productCode 조회 -->
-    <select id="selectProductCodeByItemNameAndKind" resultType="String">
-        SELECT product_code
-        FROM product
-        WHERE item_name = #{itemName}
-          AND kind_name = #{kindName}
-    </select>
-
-    <!-- 날자 범위 내에 존재하는 날짜 조회 -->
-    <select id="findExistingDatesByProductAndDateRange" resultType="java.time.LocalDate">
-        SELECT price_date
-        FROM daily_price
-        WHERE product_code = #{productCode}
-          AND price_date BETWEEN #{startDate} AND #{endDate}
-    </select>
-
-    <!-- product + priceDate 존재 여불르 체크 (Boolean) -->
+    <!-- product + priceDate 존재 여부 체크 (Boolean) -->
     <select id="existsByProductAndPriceDate"
             parameterType="map" resultType="boolean">
         SELECT EXISTS (
@@ -73,5 +42,54 @@
             WHERE product_code = #{product.productCode}
               AND price_date = #{priceDate}
         )
+    </select>
+
+    <!-- 특정 상품의 특정 날짜 가격 조회 -->
+    <select id="findPriceByProductCodeAndDate" resultType="java.lang.Long">
+        SELECT price
+        FROM daily_price
+        WHERE product_code = #{productCode}
+          AND price_date = #{priceDate}
+            LIMIT 1
+    </select>
+
+    <!-- 특정 상품의 주차 내 가장 빠른 날짜의 가격 조회 -->
+    <select id="findEarliestPriceInWeek" resultType="java.lang.Long">
+        SELECT price
+        FROM daily_price
+        WHERE product_code = #{productCode}
+          AND price_date BETWEEN #{weekStartDate} AND #{weekEndDate}
+        ORDER BY price_date ASC
+            LIMIT 1
+    </select>
+
+    <!-- 특정 상품의 주차 내 가장 마지막 날짜의 가격 조회 -->
+    <select id="findLatestPriceInWeek" resultType="java.lang.Long">
+        SELECT price
+        FROM daily_price
+        WHERE product_code = #{productCode}
+          AND price_date BETWEEN #{weekStartDate} AND #{weekEndDate}
+        ORDER BY price_date DESC
+            LIMIT 1
+    </select>
+
+    <!-- 특정 상품의 월 내 가장 빠른 날짜의 가격 조회 -->
+    <select id="findEarliestPriceInMonth" resultType="java.lang.Long">
+        SELECT price
+        FROM daily_price
+        WHERE product_code = #{productCode}
+          AND price_date BETWEEN #{monthStartDate} AND #{monthEndDate}
+        ORDER BY price_date ASC
+            LIMIT 1
+    </select>
+
+    <!-- 특정 상품의 월 내 가장 마지막 날짜의 가격 조회 -->
+    <select id="findLatestPriceInMonth" resultType="java.lang.Long">
+        SELECT price
+        FROM daily_price
+        WHERE product_code = #{productCode}
+          AND price_date BETWEEN #{monthStartDate} AND #{monthEndDate}
+        ORDER BY price_date DESC
+            LIMIT 1
     </select>
 </mapper>
