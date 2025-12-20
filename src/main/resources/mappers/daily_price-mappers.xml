@@ -8,6 +8,8 @@
         <result property="productCode" column="product_code"/>
         <result property="priceDate" column="price_date"/>
         <result property="price" column="price"/>
+        <result property="priceChange" column="price_change"/>
+        <result property="priceChangeRate" column="price_change_rate"/>
     </resultMap>
 
     <!-- save -->
