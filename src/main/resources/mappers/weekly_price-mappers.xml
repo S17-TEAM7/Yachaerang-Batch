@@ -14,6 +14,8 @@
         <result property="maxPrice" column="max_price"/>
         <result property="avgPrice" column="avg_price"/>
         <result property="priceCount" column="price_count"/>
+        <result property="priceChange" column="price_change"/>
+        <result property="priceChangeRate" column="price_change_rate"/>
     </resultMap>
     <!-- 일별 데이터를 주간으로 집계하여 조회 -->
     <select id="selectWeeklyAggregatedPrices" resultMap="weeklyPriceResultMap">
@@ -77,13 +79,13 @@
         INSERT INTO weekly_price (
         product_code, price_year, week_number,
         start_date, end_date,
-        avg_price, max_price, min_price, price_count
+        avg_price, max_price, min_price, price_count, price_change, price_change_rate
         ) VALUES
         <foreach collection="list" item="item" separator=",">
             (
             #{item.productCode}, #{item.priceYear}, #{item.weekNumber},
             #{item.startDate}, #{item.endDate},
-            #{item.avgPrice}, #{item.maxPrice}, #{item.minPrice}, #{item.priceCount}
+            #{item.avgPrice}, #{item.maxPrice}, #{item.minPrice}, #{item.priceCount}, #{item.priceChange}, #{item.priceChangeRate}
             )
         </foreach>
         ON DUPLICATE KEY UPDATE
@@ -92,6 +94,8 @@
         max_price = VALUES(max_price),
         min_price = VALUES(min_price),
         price_count = VALUES(price_count),
+        price_change = VALUES(price_change),
+        price_change_rate = VALUES(price_change_rate),
         updated_at = CURRENT_TIMESTAMP
     </insert>
 

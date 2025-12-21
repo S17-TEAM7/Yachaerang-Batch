@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
 /*
@@ -32,8 +34,8 @@ public class DailyPriceProcessor implements ItemProcessor<KamisPriceItem, DailyP
         log.debug("Processing: {} - {} - {}", item.getItemName(), item.getKindName(), item.getRankCode());
 
         // 가격 파싱
-        Long price = PriceParser.parse(item.getDpr1());
-        if (price == null) {
+        Long todayPrice = PriceParser.parse(item.getDpr1());
+        if (todayPrice == null) {
             log.debug("가격 정보 없음, 건너뜀: {}", item.getItemName());
             return null;
         }
@@ -46,11 +48,24 @@ public class DailyPriceProcessor implements ItemProcessor<KamisPriceItem, DailyP
             return null;
         }
 
+        // 가장 최근 가격 조회
+        Long priceChange = 0L;
+        BigDecimal priceChangeRate = new BigDecimal(0.00);
+
+        Long latestPrice = dailyPriceRepository.findLatestPriceByProductCode(product.getProductCode(), targetDate);
+        if (latestPrice != null && latestPrice > 0) {
+            priceChange = todayPrice - latestPrice;
+            priceChangeRate = BigDecimal.valueOf(priceChange)
+                    .divide(BigDecimal.valueOf(latestPrice), 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
         // DailyPrice 생성
         return DailyPrice.builder()
                 .productCode(product.getProductCode())
                 .priceDate(targetDate)
-                .price(price)
+                .price(todayPrice)
+                .priceChange(priceChange)
+                .priceChangeRate(priceChangeRate)
                 .build();
     }
 

@@ -12,61 +12,72 @@ import java.util.List;
 public interface DailyPriceRepository {
 
     /*
-    저장하기
+    가장 최근의 해당 품목의 가격 조회
      */
-    int save(DailyPrice dailyPrice);
+    Long findLatestPriceByProductCode(
+            @Param("productCode") String productCode,
+            @Param("priceDate") LocalDate priceDate
+    );
 
     /*
     전부 저장하기
      */
     int saveAll(List<DailyPrice> dailyPrices);
-    /*
-    DailyPrice 저장하기
-     */
-    int insertFromDailyProduct(
-            @Param("productId") Long productId,
-            @Param("priceDate")LocalDate priceDate,
-            @Param("price") Long price
-            );
 
     /*
-    DailyPrice 배치 단위로 저장하기
-     */
-    void insertBatchFromDailyProduct(
-            @Param("productCode") String productCode,
-            @Param("priceList")List<DailyPrice> priceList
-            );
-
-    /*
-    해당 날짜에 해당 상품이 저장된 것이 있는지 확인
-     */
-    int countByProductIdAndPriceDate(
-            @Param("productId") Long productId,
-            @Param("priceDate") LocalDate priceDate
-    );
-
-    /*
-    itemName과 kindName을 기반으로 해당 상품 조회
-     */
-    String selectProductCodeByItemNameAndKind(
-            @Param("itemName") String itemName,
-            @Param("kindName") String kindName
-    );
-
-    /*
-    시작과 종료일을 지정하여 존재하는 날짜를 확인
-     */
-    List<LocalDate> findExistingDatesByProductAndDateRange(
-            @Param("productCode") String productCode,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
-    );
-
-    /*
-    해당 상품의
+    해당 상품과 날짜에 대해 존재여부 확인
      */
     boolean existsByProductAndPriceDate(
             @Param("product")Product product,
             @Param("priceDate") LocalDate priceDate
             );
+
+    // 주간에 사용
+    /**
+     * 특정 상품의 주차 내 가장 빠른 날짜의 가격 조회
+     * @param weekStartDate : 관심 주차의 시작일
+     * @param weekEndDate : 관심 주차의 종료일
+     * @return : 가격
+     */
+    Long findEarliestPriceInWeek(
+            @Param("productCode") String productCode,
+            @Param("weekStartDate") LocalDate weekStartDate,
+            @Param("weekEndDate") LocalDate weekEndDate
+    );
+
+    /**
+     * 특정 상품의 주차 내 가장 마지막 날자의 가격 조회
+     * @param weekStartDate : 관심 주차의 시작일
+     * @param weekEndDate : 관심 주차의 종료일
+     * @return : 가격
+     */
+    Long findLatestPriceInWeek(
+            @Param("productCode") String productCode,
+            @Param("weekStartDate") LocalDate weekStartDate,
+            @Param("weekEndDate") LocalDate weekEndDate
+    );
+
+    // 월간에 사용
+
+    /**
+     * 특정 달에서의 가장 빠른 날의 가격 조회
+     * @param productCode : 대상 상품
+     * @param monthStartDate : 특정 달의 시작일자(호출 시점에서 계산 필요)
+     * @param monthEndDate : 특정 달의 종료일자(호출 시점에서 계산 필요)
+     * @return : 가격
+     */
+    Long findEarliestPriceInMonth(@Param("productCode") String productCode,
+                                     @Param("monthStartDate") LocalDate monthStartDate,
+                                     @Param("monthEndDate") LocalDate monthEndDate);
+
+    /**
+     * 특정 달에서의 가장 마지막 날의 가격 조회
+     * @param productCode : 대상 상품
+     * @param monthStartDate : 특정 달의 시작일자(호출 시점에서 계산 필요)
+     * @param monthEndDate : 특정 달의 종료일자(호출 시점에서 계산 필요)
+     * @return : 가격
+     */
+    Long findLatestPriceInMonth(@Param("productCode") String productCode,
+                                   @Param("monthStartDate") LocalDate monthStartDate,
+                                   @Param("monthEndDate") LocalDate monthEndDate);
 }

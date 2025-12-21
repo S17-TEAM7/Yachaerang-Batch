@@ -1,6 +1,6 @@
 package com.yachaerang.yachaerangbatch.configuration.job;
 
-import com.yachaerang.yachaerangbatch.configuration.parameter.MonthlyJobParameter;
+import com.yachaerang.yachaerangbatch.configuration.parameter.JobPeriodParameter;
 import com.yachaerang.yachaerangbatch.domain.entity.YearlyPrice;
 import com.yachaerang.yachaerangbatch.listener.JobCompletionListener;
 import com.yachaerang.yachaerangbatch.listener.StepExecutionListener;
@@ -17,11 +17,12 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,31 +72,29 @@ public class YearlyPriceJobConfig {
 
     /**
      * Reader 스텝
-     * @param year : 대상 년도
+     * @param : 대상 년도
      * @return
      */
     @Bean
     @StepScope
-    public ListItemReader<YearlyPrice> yearlyPriceReader(
-            @Value("#{jobParameters['year']}") String year
-    ) {
-        int y = Integer.parseInt(year);
+    public ListItemReader<YearlyPrice> yearlyPriceReader(JobPeriodParameter jobPeriodParameter) {
+        int year = jobPeriodParameter.getYear();
 
         List<YearlyPrice> yearlyPriceList =
-                yearlyPriceAggregationService.getYearlyAggregatedPrices(y);
+                yearlyPriceAggregationService.getYearlyAggregatedPrices(year);
 
         log.info("ListItemReader 초기화 - 최종 리스트 크기: {}", yearlyPriceList.size());
         return new ListItemReader<>(yearlyPriceList);
     }
 
     /**
-     * Processor Step : start_price, end_price 설정해 저장
+     * Processor Step : start_price, end_price 설정해 저장 + 변화율 저장
      * @return
      */
     @Bean
     @StepScope
-    public ItemProcessor<YearlyPrice, YearlyPrice> yearlyPriceProcessor(MonthlyJobParameter monthlyJobParameter) {
-        int year = monthlyJobParameter.getYear();
+    public ItemProcessor<YearlyPrice, YearlyPrice> yearlyPriceProcessor(JobPeriodParameter jobPeriodParameter) {
+        int year = jobPeriodParameter.getYear();
 
         return item -> {
             if (item.getPriceCount() == 0) {
@@ -104,8 +103,32 @@ public class YearlyPriceJobConfig {
             }
 
             // 연초와 연말 가격 설정
-            item.setStartPrice(yearlyPriceAggregationService.getStartPrice(item.getProductCode(), year));
-            item.setEndPrice(yearlyPriceAggregationService.getEndPrice(item.getProductCode(), year));
+            Long startPrice = yearlyPriceAggregationService.getStartPrice(item.getProductCode(), year);
+            Long endPrice = yearlyPriceAggregationService.getEndPrice(item.getProductCode(), year);
+            item.setStartPrice(startPrice);
+            item.setEndPrice(endPrice);
+
+            // 가격 변화 계산
+            Long priceChange = 0L;
+            BigDecimal priceChangeRate = BigDecimal.ZERO;
+
+            // 둘 다 null 체크 + startPrice로 나누기
+            if (startPrice != null && endPrice != null && startPrice > 0) {
+                priceChange = endPrice - startPrice;  // 연말 - 연초
+                priceChangeRate = BigDecimal.valueOf(priceChange)
+                        .divide(BigDecimal.valueOf(startPrice), 4, RoundingMode.HALF_UP)  // startPrice로 나누기
+                        .multiply(BigDecimal.valueOf(100));
+
+                log.debug("연간 변화 계산: productCode={}, start={}, end={}, change={}, rate={}%",
+                        item.getProductCode(), startPrice, endPrice, priceChange, priceChangeRate);
+            } else {
+                log.debug("연간 변화 계산 불가: productCode={}, startPrice={}, endPrice={}",
+                        item.getProductCode(), startPrice, endPrice);
+            }
+
+            item.setPriceChange(priceChange);
+            item.setPriceChangeRate(priceChangeRate);
+
             return item;
         };
     }

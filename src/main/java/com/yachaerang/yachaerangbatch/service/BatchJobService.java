@@ -1,6 +1,7 @@
 package com.yachaerang.yachaerangbatch.service;
 
 import com.yachaerang.yachaerangbatch.exception.GeneralException;
+import com.yachaerang.yachaerangbatch.util.WeekUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
@@ -8,7 +9,6 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -30,15 +30,14 @@ public class BatchJobService {
     /**
      * 단일 날짜에 대한 조회
      */
-    public void runManually(LocalDate targetDate) {
+    public JobExecution runManually(LocalDate targetDate) {
         try {
             log.info("Daily Price Job 수동 시작: date={}", targetDate);
             JobParameters jobParameters = new JobParametersBuilder()
                     .addString("targetDate", targetDate.format(FORMATTER))
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
-            jobLauncher.run(dailyPriceJob, jobParameters);
-            log.info("Daily Price Job 수동 실행 전체 완료: date={}", targetDate);
+            return jobLauncher.run(dailyPriceJob, jobParameters);
         } catch (Exception e) {
             log.error("수동 실행 실패", e);
             throw new RuntimeException("Job 실행 실패", e);
@@ -63,15 +62,15 @@ public class BatchJobService {
     }
 
     /**
-     * 특정 월의 전체 데이터 수집
+     * 특정 월의 일자별 데이터 전체 수집
      */
-    public JobExecution collectMonth(int year, int month) throws JobExecutionException {
+    public JobExecution collectMonth(Integer year, Integer month) throws JobExecutionException {
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
 
-        log.info("월간 배치 실행: {}-{}", year, month);
+        log.info("일자 데이터 월 단위 배치 실행: {}-{}", year, month);
 
         return collectDateRange(startDate, endDate);
     }
@@ -88,9 +87,15 @@ public class BatchJobService {
     /**
      * 특정 기간의 주간 가격 집계 실행
      */
-    public void runWeeklyAggregation(LocalDate targetDate) {
-        LocalDate startDate = targetDate.with(DayOfWeek.MONDAY);
-        LocalDate endDate = startDate.plusDays(6);
+    public JobExecution runWeeklyAggregation(Integer year, Integer week) {
+
+        // 만약 year와 week가 안맞으면 예외
+        if (week > WeekUtils.getLastIsoWeekOfYear(year)) {
+            throw new IllegalArgumentException("week가 해당 년도의 주차에 존재하지 않는 주차입니다.");
+        }
+
+        LocalDate startDate = WeekUtils.getWeekStartDate(year, week);
+        LocalDate endDate = WeekUtils.getWeekEndDate(year, week);
         // 날짜 검증
         LocalDate yesterday = LocalDate.now().minusDays(1);
         if (!endDate.isBefore(yesterday)) {
@@ -99,17 +104,15 @@ public class BatchJobService {
             );
         }
 
-        log.info("주간 집계 실행 - 입력: {}, 기간: {} ~ {}", targetDate, startDate, endDate);
+        log.info("주간 집계 실행 - 입력: {}년 {}주차, 기간: {} ~ {}", year, week, startDate, endDate);
         try {
             JobParameters params = new JobParametersBuilder()
-                    .addString("startDate", startDate.toString())
-                    .addString("endDate", endDate.toString())
+                    .addString("year", year.toString())
+                    .addString("week", week.toString())
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            JobExecution execution = jobLauncher.run(weeklyPriceJob, params);
-            log.info("Job 실행 결과: {}", execution.getStatus());
-
+            return jobLauncher.run(weeklyPriceJob, params);
         } catch (Exception e) {
             log.error("주간 가격 집계 Job 실행 실패", e);
             throw new RuntimeException("Job 실행 실패", e);
@@ -119,7 +122,7 @@ public class BatchJobService {
     /**
      * 특정 기간의 월간 가격 집계 실행
      */
-    public void runMonthlyAggregation(Integer year, Integer month) throws JobExecutionException {
+    public JobExecution runMonthlyAggregation(Integer year, Integer month) throws JobExecutionException {
         // 날짜 검증
         if (year == null || month == null) {
             throw new GeneralException("year와 month는 필수입니다.");
@@ -144,12 +147,7 @@ public class BatchJobService {
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            JobExecution execution = jobLauncher.run(monthlyPriceJob, params);
-            log.info("Job 실행 결과: {}", execution.getStatus());
-
-            if (execution.getStatus() == BatchStatus.FAILED) {
-                throw new GeneralException("월간 집계 Job이 실패했습니다.");
-            }
+            return jobLauncher.run(monthlyPriceJob, params);
         } catch (JobExecutionAlreadyRunningException e) {
             log.warn("이미 실행 중인 Job입니다.");
             throw new GeneralException("이미 실행 중인 Job입니다.", e);
@@ -162,7 +160,7 @@ public class BatchJobService {
     /**
      * 특정 연도의 연간 가격 집계 실행
      */
-    public void runYearlyAggregation(Integer year) {
+    public JobExecution runYearlyAggregation(Integer year) {
         // 기본 유효성 검증
         if (year == null) {
             throw new IllegalArgumentException("year는 필수입니다.");
@@ -184,13 +182,7 @@ public class BatchJobService {
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            JobExecution execution = jobLauncher.run(yearlyPriceJob, params);
-            log.info("Job 실행 결과: {}", execution.getStatus());
-
-            if (execution.getStatus() == BatchStatus.FAILED) {
-                throw new GeneralException("연간 집계 Job이 실패했습니다.");
-            }
-
+            return jobLauncher.run(yearlyPriceJob, params);
         } catch (JobExecutionAlreadyRunningException e) {
             log.warn("이미 실행 중인 Job입니다.");
             throw new RuntimeException("이미 실행 중인 Job입니다.", e);

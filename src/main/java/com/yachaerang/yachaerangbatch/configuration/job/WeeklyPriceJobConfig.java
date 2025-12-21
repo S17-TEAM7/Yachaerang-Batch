@@ -1,9 +1,13 @@
 package com.yachaerang.yachaerangbatch.configuration.job;
 
+import com.yachaerang.yachaerangbatch.configuration.parameter.JobPeriodParameter;
 import com.yachaerang.yachaerangbatch.domain.entity.WeeklyPrice;
+import com.yachaerang.yachaerangbatch.domain.weeklyPrice.processor.WeeklyPriceProcessor;
 import com.yachaerang.yachaerangbatch.listener.JobCompletionListener;
 import com.yachaerang.yachaerangbatch.listener.StepExecutionListener;
+import com.yachaerang.yachaerangbatch.repository.DailyPriceRepository;
 import com.yachaerang.yachaerangbatch.service.WeeklyPriceAggregationService;
+import com.yachaerang.yachaerangbatch.util.WeekUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
@@ -12,10 +16,8 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -35,6 +37,7 @@ public class WeeklyPriceJobConfig {
     private final StepExecutionListener stepExecutionListener;
 
     private final WeeklyPriceAggregationService weeklyPriceAggregationService;
+    private final DailyPriceRepository dailyPriceRepository;
 
     private static final int CHUNK_SIZE= 100;
 
@@ -55,7 +58,7 @@ public class WeeklyPriceJobConfig {
         return new StepBuilder("weeklyPriceStep", jobRepository)
                 .<WeeklyPrice, WeeklyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
                 .listener(stepExecutionListener)
-                .reader(weeklyPriceReader(null, null))
+                .reader(weeklyPriceReader(null))
                 .processor(weeklyPriceProcessor())
                 .writer(weeklyPriceWriter())
                 .faultTolerant()
@@ -65,21 +68,21 @@ public class WeeklyPriceJobConfig {
     }
 
     /**
-     * Reader 스텝
-     * @param startDate : 시작 날짜
-     * @param endDate : 종료 날짜
+     * 집계 일기
+     * @param jobPeriodParameter
      * @return
      */
     @Bean
     @StepScope
-    public ListItemReader<WeeklyPrice> weeklyPriceReader(
-            @Value("#{jobParameters['startDate']}") String startDate,
-            @Value("#{jobParameters['endDate']}") String endDate) {
+    public ListItemReader<WeeklyPrice> weeklyPriceReader(JobPeriodParameter jobPeriodParameter) {
+
+        int year = jobPeriodParameter.getYear();
+        int week = jobPeriodParameter.getWeek();
+        LocalDate startDate = WeekUtils.getWeekStartDate(year, week);
+        LocalDate endDate = WeekUtils.getWeekEndDate(year, week);
 
         List<WeeklyPrice> weeklyPriceList =
-                weeklyPriceAggregationService.getWeeklyAggregatedPrices(
-                        LocalDate.parse(startDate), LocalDate.parse(endDate)
-                );
+                weeklyPriceAggregationService.getWeeklyAggregatedPrices(startDate, endDate);
 
         log.info("ListItemReader 초기화 - 최종 리스트 크기: {}", weeklyPriceList.size());
 
@@ -92,14 +95,10 @@ public class WeeklyPriceJobConfig {
      * @return
      */
     @Bean
-    public ItemProcessor<WeeklyPrice, WeeklyPrice> weeklyPriceProcessor() {
-        return item -> {
-            if (item.getPriceCount() == 0) {
-                log.debug("priceCount가 0이므로 스킵: {}", item.getProductCode());
-                return null;
-            }
-            return item;
-        };
+    @StepScope
+    public WeeklyPriceProcessor weeklyPriceProcessor() {
+
+        return new WeeklyPriceProcessor(dailyPriceRepository);
     }
 
     /**

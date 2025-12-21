@@ -34,13 +34,6 @@ public class WeeklyPriceAggregationService {
     }
 
     /**
-     * 주간 가격 데이터 저장
-     */
-    public void saveWeeklyPrice(WeeklyPrice weeklyPrice) {
-        weeklyPriceRepository.upsertWeeklyPrice(weeklyPrice);
-    }
-
-    /**
      * 주간 가격 데이터 배치 저장
      */
     public void saveWeeklyPrices(List<WeeklyPrice> weeklyPrices) {
