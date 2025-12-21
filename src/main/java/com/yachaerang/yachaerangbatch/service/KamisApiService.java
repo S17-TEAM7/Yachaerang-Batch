@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yachaerang.yachaerangbatch.domain.dto.KamisApiResponse;
 import com.yachaerang.yachaerangbatch.domain.dto.KamisPriceItem;
 import com.yachaerang.yachaerangbatch.exception.GeneralException;
-import com.yachaerang.yachaerangbatch.util.DateUtil;
+import com.yachaerang.yachaerangbatch.util.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,7 +114,7 @@ public class KamisApiService {
         return UriComponentsBuilder.fromHttpUrl(KAMIS_DAILY_PRICE_URL)
                 .queryParam("action", "dailyPriceByCategoryList")
                 .queryParam("p_product_cls_code", "02") // 01: 소매, 02: 도매
-                .queryParam("p_regday", DateUtil.formatForApi(date))
+                .queryParam("p_regday", DateUtils.formatForApi(date))
                 .queryParam("p_convert_kg_yn", "N")
                 .queryParam("p_item_category_code", categoryCode)
                 .queryParam("p_cert_key", kamisApiKey)

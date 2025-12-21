@@ -1,14 +1,13 @@
 package com.yachaerang.yachaerangbatch.domain.entity;
 
 import com.yachaerang.yachaerangbatch.domain.common.BaseEntity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -25,4 +24,22 @@ public class MonthlyPrice extends BaseEntity {
     private Long maxPrice;
 
     private Integer priceCount;
+
+    private Long priceChange;
+    private BigDecimal priceChangeRate;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MonthlyPrice that = (MonthlyPrice) o;
+        return Objects.equals(productCode, that.productCode) &&
+                Objects.equals(priceYear, that.priceYear) &&
+                Objects.equals(priceMonth, that.priceMonth);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(productCode, priceYear, priceMonth);
+    }
 }

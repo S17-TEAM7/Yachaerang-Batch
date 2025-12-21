@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class DateUtil {
+public class DateUtils {
 
     private static final DateTimeFormatter API_DATE_FORMAT = DateTimeFormatter.ofPattern(("yyyy-MM-dd"));
 

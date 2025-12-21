@@ -1,5 +1,6 @@
 package com.yachaerang.yachaerangbatch.configuration.parameter;
 
+import com.yachaerang.yachaerangbatch.util.WeekUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.JobScope;
@@ -12,10 +13,11 @@ import java.time.LocalDate;
 @Getter
 @Component
 @JobScope
-public class MonthlyJobParameter {
+public class JobPeriodParameter {
 
     private Integer year;
     private Integer month;
+    private Integer week;
 
     /*
     year 설정
@@ -52,6 +54,39 @@ public class MonthlyJobParameter {
         this.month = normalizeMonth(parsed);
 
         log.info("Target Month 설정: {}", this.month);
+    }
+
+    /*
+    week 설정하기
+     */
+    @Value("#{jobParameters['week']}")
+    public void setWeek(String week) {
+        int targetWeek;
+
+        // 1) 기본값: 현재 날짜의 ISO 주차
+        if (week == null || week.isBlank()) {
+            int[] targetYearWeek = WeekUtils.getYearAndWeek(LocalDate.now());
+            targetWeek = targetYearWeek[1];
+            this.week = targetWeek;
+            log.info("jobParameters['week'] 미입력 → 기본 ISO 주차 사용: {}", this.week);
+            return;
+        }
+
+        // 2) 숫자 파싱
+        int parsed = parseIntOrThrow("week", week);
+
+        // 3) 1차 범위 체크
+        if (parsed < 1 || parsed > 53) {
+            throw new IllegalArgumentException(
+                    "jobParameters['week']는 1~52 또는 53만 허용합니다. 입력값=" + parsed
+            );
+        }
+        int maxWeek = WeekUtils.getLastIsoWeekOfYear(year);
+        if (maxWeek < parsed) {
+            throw new IllegalArgumentException(String.format("%d년도는 %d주차까지만 존재합니다.", year, maxWeek));
+        }
+        this.week = parsed;
+        log.info("Target ISO Week 설정: {} (year={})", this.week, year);
     }
 
 
