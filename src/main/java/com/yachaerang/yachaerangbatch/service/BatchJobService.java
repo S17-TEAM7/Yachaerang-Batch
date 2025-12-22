@@ -140,7 +140,7 @@ public class BatchJobService {
 
         try {
             // 같은 연도일 때
-            if (startYear.equals(endYear)) {
+            if (startYear.intValue() == endYear.intValue()) {
                 for (int week = startWeek; week <= endWeek; week++) {
                     JobExecution result = runWeeklyAggregation(startYear, week);
                     resultList.add(result);
@@ -150,10 +150,11 @@ public class BatchJobService {
             else {
                 // 시작년도의 startWeek ~ 마지막 주까지
                 int lastWeekOfStartYear = WeekUtils.getLastIsoWeekOfYear(startYear);
-                for (int week = startWeek; week <= endWeek; week++) {
+                for (int week = startWeek; week <= lastWeekOfStartYear; week++) {
                     JobExecution result = runWeeklyAggregation(startYear, week);
                     resultList.add(result);
                 }
+
                 // 중간년도(1년 넘게 차이난다면)
                 for (int year = startYear + 1; year < endYear; year++) {
                     int lastWeekOfYear = WeekUtils.getLastIsoWeekOfYear(year);
@@ -162,20 +163,22 @@ public class BatchJobService {
                         resultList.add(result);
                     }
                 }
-            }
-            // 종료년도의  1주차부터 endWeek까지
-            for (int week = 1; week <= endWeek; week++) {
-                JobExecution result = runWeeklyAggregation(endYear, week);
-                resultList.add(result);
+
+                // 종료년도의 1주차부터 endWeek까지
+                for (int week = 1; week <= endWeek; week++) {
+                    JobExecution result = runWeeklyAggregation(endYear, week);
+                    resultList.add(result);
+                }
             }
 
+            log.info("주간 집계 범위 실행 완료 - 총 {}개 Job 실행", resultList.size());
             return resultList;
+
         } catch (Exception e) {
             log.error("주간 집계 범위 실행 중 예외 발생", e);
             throw new RuntimeException("주간 집계 범위 실행 실패", e);
         }
     }
-
 
 
     /**
