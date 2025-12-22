@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -62,30 +64,22 @@ public class BatchJobService {
     }
 
     /**
-     * 특정 월의 일자별 데이터 전체 수집
+     * 이전 월의 일자별 데이터 전체 수집
+     * 스케줄러로 사용할 로직
      */
-    public JobExecution collectMonth(Integer year, Integer month) throws JobExecutionException {
+    public JobExecution collectPreviousMonth() throws JobExecutionException {
 
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDate startDate = yearMonth.atDay(1);
-        LocalDate endDate = yearMonth.atEndOfMonth();
+        YearMonth previousMonth = YearMonth.now().minusMonths(1);
+        LocalDate startDate = previousMonth.atDay(1);
+        LocalDate endDate = previousMonth.atEndOfMonth();
 
-        log.info("일자 데이터 월 단위 배치 실행: {}-{}", year, month);
+        log.info("이전의 달 배치 실행: {}-{}", previousMonth.getYear(), previousMonth.getMonthValue());
 
         return collectDateRange(startDate, endDate);
     }
 
     /**
-     * 전월 일간 데이터 수집
-     */
-    public JobExecution collectPreviousMonth() throws JobExecutionException {
-        YearMonth previousMonth = YearMonth.now().minusMonths(1);
-        log.info("이전의 달 배치 실행: {}-{}", previousMonth.getYear(), previousMonth.getMonthValue());
-        return collectMonth(previousMonth.getYear(), previousMonth.getMonthValue());
-    }
-
-    /**
-     * 특정 기간의 주간 가격 집계 실행
+     * 특정 주간 가격 집계 실행
      */
     public JobExecution runWeeklyAggregation(Integer year, Integer week) {
 
@@ -118,6 +112,71 @@ public class BatchJobService {
             throw new RuntimeException("Job 실행 실패", e);
         }
     }
+
+
+    /**
+     * 특정 기간의 주간 데이터를 수동으로 수집
+     *
+     * @param startYear
+     * @param startWeek
+     * @param endYear
+     * @param endWeek
+     * @return
+     */
+    public List<JobExecution> collectWeekly(
+            Integer startYear, Integer startWeek, Integer endYear, Integer endWeek
+    ) {
+        if (startYear > endYear) {
+            throw new IllegalArgumentException("날짜 설정을 똑바로 해주세요.");
+        }
+        if (startWeek < 1 || startWeek > 53 || endWeek < 1 || endWeek > 53) {
+            throw new IllegalArgumentException("주차는 1~52 또는 53만 허용합니다.");
+        }
+
+        log.info("주간 집계 범위 실행 시작 - {}년 {}주 ~ {}년 {}주",
+                startYear, startWeek, endYear, endWeek);
+
+        List<JobExecution> resultList = new ArrayList<>();
+
+        try {
+            // 같은 연도일 때
+            if (startYear.equals(endYear)) {
+                for (int week = startWeek; week <= endWeek; week++) {
+                    JobExecution result = runWeeklyAggregation(startYear, week);
+                    resultList.add(result);
+                }
+            }
+            // 연도가 다를 때
+            else {
+                // 시작년도의 startWeek ~ 마지막 주까지
+                int lastWeekOfStartYear = WeekUtils.getLastIsoWeekOfYear(startYear);
+                for (int week = startWeek; week <= endWeek; week++) {
+                    JobExecution result = runWeeklyAggregation(startYear, week);
+                    resultList.add(result);
+                }
+                // 중간년도(1년 넘게 차이난다면)
+                for (int year = startYear + 1; year < endYear; year++) {
+                    int lastWeekOfYear = WeekUtils.getLastIsoWeekOfYear(year);
+                    for (int week = 1; week <= lastWeekOfYear; week++) {
+                        JobExecution result = runWeeklyAggregation(year, week);
+                        resultList.add(result);
+                    }
+                }
+            }
+            // 종료년도의  1주차부터 endWeek까지
+            for (int week = 1; week <= endWeek; week++) {
+                JobExecution result = runWeeklyAggregation(endYear, week);
+                resultList.add(result);
+            }
+
+            return resultList;
+        } catch (Exception e) {
+            log.error("주간 집계 범위 실행 중 예외 발생", e);
+            throw new RuntimeException("주간 집계 범위 실행 실패", e);
+        }
+    }
+
+
 
     /**
      * 특정 기간의 월간 가격 집계 실행

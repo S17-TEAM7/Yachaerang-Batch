@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,6 +38,7 @@ public class BatchJobController {
 
     /**
      * 기간 범위 데이터 수집
+     * 일자를 기준으로 기간에 대하여 일별 데이터 수집
      */
     @PostMapping("/date-range")
     public ResponseEntity<Map<String, Object>> collectDateRange(
@@ -51,50 +54,6 @@ public class BatchJobController {
             response.put("startDate", startDate.toString());
             response.put("endDate", endDate.toString());
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-
-    /**
-     * 특정 월 데이터 수집
-     */
-    @PostMapping("/month")
-    public ResponseEntity<Map<String, Object>> collectMonth(
-            @RequestParam(name = "year") int year, @RequestParam(name = "month") int month) {
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            JobExecution execution = batchJobService.collectMonth(year, month);
-            response.put("success", true);
-            response.put("jobId", execution.getJobId());
-            response.put("status", execution.getStatus().toString());
-            response.put("year", year);
-            response.put("month", month);
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-
-    /**
-     * 이전 달의 데이터 수집
-     */
-    @PostMapping("/previous-month")
-    public ResponseEntity<Map<String, Object>> collectPreviousMonth() {
-
-        Map<String, Object> response = new HashMap<>();
-        try {
-            JobExecution execution = batchJobService.collectPreviousMonth();
-            response.put("success", true);
-            response.put("jobId", execution.getJobId());
-            response.put("status", execution.getStatus().toString());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
@@ -124,6 +83,45 @@ public class BatchJobController {
             response.put("week", week.toString());
 
             return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     */
+    @PostMapping("/weekly-price/range")
+    public ResponseEntity<Map<String, Object>> runWeeklyPriceJob(
+            @RequestParam("startYear") Integer startYear,
+            @RequestParam("startWeek") Integer startWeek,
+            @RequestParam("endYear") Integer endYear,
+            @RequestParam("endWeek") Integer endWeek
+    ) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            List<JobExecution> executionList = batchJobService.collectWeekly(startYear, startWeek, endYear, endWeek);
+
+            // 공통 응답 데이터
+            response.put("success", true);
+
+            response.put("jobIdList", executionList.stream()
+                    .map(JobExecution::getJobId)
+                    .collect(Collectors.toList()));
+            response.put("statusList", executionList.stream()
+                    .map(JobExecution::getStatus)
+                    .collect(Collectors.toList()));
+
+            response.put("parameters", executionList.stream()
+                    .map(jobExecution -> jobExecution.getJobParameters().getParameters())
+                    .map(params -> params.values().stream()
+                            .map(param -> param.getValue())
+                            .collect(Collectors.toList()))
+                    .collect(Collectors.toList()));
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", e.getMessage());
