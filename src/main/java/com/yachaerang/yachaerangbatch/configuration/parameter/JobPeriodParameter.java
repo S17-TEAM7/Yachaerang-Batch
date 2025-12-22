@@ -84,7 +84,7 @@ public class JobPeriodParameter {
             throw new IllegalArgumentException(String.format("%d년도는 %d주차까지만 존재합니다.", year, maxWeek));
         }
         this.week = parsed;
-        log.info("Target ISO Week 설정: {} (year={})", this.week, year);
+        log.info("Target ISO Week 설정: {} (year={})", this.week, this.year);
     }
 
 
