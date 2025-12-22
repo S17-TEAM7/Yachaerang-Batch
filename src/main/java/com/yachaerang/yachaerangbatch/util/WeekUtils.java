@@ -42,12 +42,4 @@ public class WeekUtils {
         LocalDate dec28 = LocalDate.of(year, 12, 28);
         return dec28.get(WeekFields.ISO.weekOfWeekBasedYear());
     }
-
-    public static int isoWeekOfYear(LocalDate date) {
-        return date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
-    }
-
-    public static int isoWeekBasedYear(LocalDate date) {
-        return date.get(IsoFields.WEEK_BASED_YEAR);
-    }
 }
